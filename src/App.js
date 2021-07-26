@@ -7,12 +7,27 @@ class WebcamCapture extends React.Component {
     super(props);
     this.state = {
       persons: [],
+      images: [],
     };
+    this.video = null;
+    this.canvas = null;
+    let isMobile = window.matchMedia("only screen and (max-width: 760px)").matches;
+    if (isMobile) {
+      this.width = window.screen.width;
+      this.height = 0;
+    } else {
+      this.width = 500;
+      this.height = 0;
+    }
+    this.streaming = false;
+    this.facingMode = true;
+    this.currentStream = null;
   }
 
   renderInfo(i) {
     return (
         <div key={i}>
+          <img src={this.state.images[i]} alt="Not available."/>
           <p>Name: {this.state.persons[i].name}</p>
           <p>Surname: {this.state.persons[i].surname}</p>
         </div>
@@ -20,30 +35,11 @@ class WebcamCapture extends React.Component {
   }
 
   render() {
-    let isMobile = window.matchMedia("only screen and (max-width: 760px)").matches;
-    let width, height;
-    if (isMobile) {
-      width = window.screen.width;
-      height = 0;
-    } else {
-      width = 500;
-      height = 0;
-    }
-
-    let streaming = false;
-
-    let video = null;
-    let canvas = null;
-    let photo = null;
-    let facingMode = true;
-    let currentStream;
-
     const startUp = async () => {
-      video = document.getElementById("cameraVideo");
-      canvas = document.getElementById("canvas");
-      photo = document.getElementById("photo");
+      this.video = document.getElementById("cameraVideo");
+      this.canvas = document.getElementById("canvas");
       let mode;
-      if (facingMode) {
+      if (this.facingMode) {
         mode = "user";
       } else {
         mode = "environment";
@@ -52,34 +48,33 @@ class WebcamCapture extends React.Component {
       navigator.mediaDevices
           .getUserMedia({video: {facingMode: mode}, audio: false})
           .then((stream) => {
-            currentStream = stream;
-            video.srcObject = stream;
-            video.play();
+            this.currentStream = stream;
+            this.video.srcObject = stream;
+            this.video.play();
           })
           .catch((err) => {
             console.log("An error occurred: " + err);
           })
 
-      video.addEventListener("canplay", () => {
-        if (!streaming) {
-          height = video.videoHeight / (video.videoWidth / width);
+      this.video.addEventListener("canplay", () => {
+        if (!this.streaming) {
+          this.height = this.video.videoHeight / (this.video.videoWidth / this.width);
 
-          video.setAttribute("width", width);
-          video.setAttribute("height", height);
-          canvas.setAttribute("width", width);
-          canvas.setAttribute("height", height);
-          streaming = true;
+          this.video.setAttribute("width", this.width);
+          this.video.setAttribute("height", this.height);
+          this.canvas.setAttribute("width", this.width);
+          this.canvas.setAttribute("height", this.height);
+          this.streaming = true;
         }
       }, false);
-
-      await clearPhoto();
     }
 
     const changeCamera = async () => {
-      if (typeof currentStream !== 'undefined') {
-        stopMediaTracks(currentStream);
+      this.setState({persons: [], images: [],});
+      if (typeof this.currentStream !== 'undefined') {
+        stopMediaTracks(this.currentStream);
       }
-      facingMode = !facingMode;
+      this.facingMode = !this.facingMode;
       await startUp();
     }
 
@@ -89,36 +84,35 @@ class WebcamCapture extends React.Component {
       });
     }
 
-    const clearPhoto = async () => {
-      let context = canvas.getContext("2d");
-      context.fillStyle = "#282c34";
-      context.fillRect(0, 0, canvas.width, canvas.height);
-
-      let data = canvas.toDataURL("image/jpeg");
-      photo.setAttribute("src", data);
-    }
-
     const takePicture = async () => {
-      let context = canvas.getContext("2d");
-      if (width && height) {
-        canvas.width = width;
-        canvas.height = height;
-        context.drawImage(video, 0, 0, width, height);
+      this.setState({persons: [], images: [],});
+      let context = this.canvas.getContext("2d");
+      if (this.width && this.height) {
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+        context.drawImage(this.video, 0, 0, this.width, this.height);
 
-        let data = canvas.toDataURL("image/jpeg");
+        let data = this.canvas.toDataURL("image/jpeg");
+        let imgData = new Image(this.width, this.height);
+        imgData.src = data;
         let response = await sendImage(data);
+        let images = new Array(response.length);
+        for (let i = 0; i < response.length; i++) {
+          let tempCanvas = document.createElement("canvas");
+          let tempContext = tempCanvas.getContext("2d");
+          let bbox = response[i].bbox;
+          tempCanvas.width = bbox[2] - bbox[0];
+          tempCanvas.height = bbox[3] - bbox[1];
+          tempContext.drawImage(imgData, bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1], 0, 0, bbox[2] - bbox[0], bbox[3] - bbox[1])
+          data = tempCanvas.toDataURL("image/jpeg");
+          images[i] = data;
+        }
         this.setState({
           persons: response,
+          images: images,
         })
-        context.strokeStyle = "red";
-        for (let i = 0; i < this.state.persons.length; i++) {
-          let bbox = this.state.persons[i].bbox;
-          context.strokeRect(bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]);
-        }
-        data = canvas.toDataURL("image/jpeg");
-        photo.setAttribute("src", data);
       } else {
-        await clearPhoto();
+        this.setState({persons: [], images: [],});
       }
     }
 
@@ -132,13 +126,12 @@ class WebcamCapture extends React.Component {
             <button className="myButton" id="buttonTakePhoto" onClick={takePicture}>Take photo</button>
           </div>
           <div id="output">
-            <img id="photo" alt="not"/>
+              {
+                this.state.persons.map((value, index) => {
+                  return this.renderInfo(index);
+                })
+              }
           </div>
-          {
-            this.state.persons.map((value, index) => {
-              return this.renderInfo(index)
-            })
-          }
           <canvas id="canvas">
           </canvas>
         </div>
