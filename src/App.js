@@ -10,6 +10,7 @@ class WebcamCapture extends React.Component {
       images: [],
     };
     this.status = "";
+    this.buttonDisabled = true;
     this.video = null;
     this.canvas = null;
     let isMobile = window.matchMedia("only screen and (max-width: 760px)").matches;
@@ -52,6 +53,8 @@ class WebcamCapture extends React.Component {
             this.currentStream = stream;
             this.video.srcObject = stream;
             this.video.play();
+            this.buttonDisabled = false;
+            this.forceUpdate();
           })
           .catch((err) => {
             this.video.outerHTML = "<div id='cameraVideo'>" +
@@ -133,8 +136,8 @@ class WebcamCapture extends React.Component {
           <div className="App">
             <p>{this.status}</p>
             <video id="cameraVideo"/>
-            <button className="myButton" id="buttonChange" onClick={changeCamera}>Change camera</button>
-            <button className="myButton" id="buttonTakePhoto" onClick={takePicture}>Take photo</button>
+            <button className="myButton" id="buttonChange" onClick={changeCamera} disabled={this.buttonDisabled}>Change camera</button>
+            <button className="myButton" id="buttonTakePhoto" onClick={takePicture} disabled={this.buttonDisabled}>Take photo</button>
           </div>
           <div id="output">
               {
@@ -152,7 +155,7 @@ class WebcamCapture extends React.Component {
 
 const sendImage = async (imgString) => {
   let data = {image: imgString.split(",")[1]};
-  return postData("https://face-recognition-microservice.herokuapp.com/", data)//.then((data) => {CropImage(data)})
+  return postData("https://face-recognition-microservice.herokuapp.com/", data)
 }
 
 async function postData(url = '', data = {}) {
