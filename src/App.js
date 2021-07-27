@@ -74,6 +74,7 @@ class WebcamCapture extends React.Component {
     }
 
     const changeCamera = async () => {
+      this.status = "";
       this.setState({persons: [], images: [],});
       if (typeof this.currentStream !== 'undefined') {
         stopMediaTracks(this.currentStream);
