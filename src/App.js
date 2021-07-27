@@ -9,6 +9,7 @@ class WebcamCapture extends React.Component {
       persons: [],
       images: [],
     };
+    this.status = "";
     this.video = null;
     this.canvas = null;
     let isMobile = window.matchMedia("only screen and (max-width: 760px)").matches;
@@ -53,6 +54,9 @@ class WebcamCapture extends React.Component {
             this.video.play();
           })
           .catch((err) => {
+            this.video.outerHTML = "<div id='cameraVideo'>" +
+                "<p>Video stream is not available</p>" +
+                "</div>";
             console.log("An error occurred: " + err);
           })
 
@@ -88,6 +92,7 @@ class WebcamCapture extends React.Component {
       this.setState({persons: [], images: [],});
       let context = this.canvas.getContext("2d");
       if (this.width && this.height) {
+        this.status = "Image processing...";
         this.canvas.width = this.width;
         this.canvas.height = this.height;
         context.drawImage(this.video, 0, 0, this.width, this.height);
@@ -95,8 +100,11 @@ class WebcamCapture extends React.Component {
         let data = this.canvas.toDataURL("image/jpeg");
         let imgData = new Image(this.width, this.height);
         imgData.src = data;
+        this.status = "Image sending...";
+        this.status = "Result waiting...";
         let response = await sendImage(data);
         let images = new Array(response.length);
+        this.status = "Result processing...";
         for (let i = 0; i < response.length; i++) {
           let tempCanvas = document.createElement("canvas");
           let tempContext = tempCanvas.getContext("2d");
@@ -107,6 +115,7 @@ class WebcamCapture extends React.Component {
           data = tempCanvas.toDataURL("image/jpeg");
           images[i] = data;
         }
+        this.status = "Result output";
         this.setState({
           persons: response,
           images: images,
@@ -121,7 +130,8 @@ class WebcamCapture extends React.Component {
     return (
         <div className="App-header">
           <div className="App">
-            <video id="cameraVideo">Video stream is not available.</video>
+            <p>{this.status}</p>
+            <video id="cameraVideo"/>
             <button className="myButton" id="buttonChange" onClick={changeCamera}>Change camera</button>
             <button className="myButton" id="buttonTakePhoto" onClick={takePicture}>Take photo</button>
           </div>
