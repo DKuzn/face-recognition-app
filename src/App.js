@@ -6,6 +6,7 @@ class WebcamCapture extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      sourceFrame: "",
       persons: [],
       images: [],
     };
@@ -29,7 +30,8 @@ class WebcamCapture extends React.Component {
   renderInfo(i) {
     return (
         <div key={i}>
-          <img src={this.state.images[i]} alt="Not available."/>
+          <img className="imageOutput" src={this.state.images[i]} alt="Not available."/>
+          <img className="imageOutput" src={this.state.persons[i].image} alt="Not available."/>
           <p>Name: {this.state.persons[i].name}</p>
           <p>Surname: {this.state.persons[i].surname}</p>
         </div>
@@ -86,14 +88,32 @@ class WebcamCapture extends React.Component {
       await startUp();
     }
 
-    function stopMediaTracks(stream) {
+    const stopMediaTracks = (stream) => {
       stream.getTracks().forEach(track => {
         track.stop();
       });
     }
 
+    const drawImage = (response, imgData) => {
+      let tempCanvas = document.createElement("canvas");
+      let tempContext = tempCanvas.getContext("2d");
+      let bbox = response.bbox;
+      tempCanvas.width = bbox[2] - bbox[0];
+      tempCanvas.height = bbox[3] - bbox[1];
+      tempContext.drawImage(imgData, bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1], 0, 0, tempCanvas.width, tempCanvas.height);
+      return tempCanvas.toDataURL("image/jpeg");
+    }
+
+    const loadImage = (url) => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.addEventListener('load', () => resolve(img));
+      img.addEventListener('error', (err) => reject(err));
+      img.src = url;
+      return img;
+    });
+
     const takePicture = async () => {
-      this.setState({persons: [], images: [],});
+      this.setState({sourceFrame: "", persons: [], images: [],});
       let context = this.canvas.getContext("2d");
       if (this.width && this.height) {
         this.status = "Image processing...";
@@ -102,30 +122,31 @@ class WebcamCapture extends React.Component {
         context.drawImage(this.video, 0, 0, this.width, this.height);
 
         let data = this.canvas.toDataURL("image/jpeg");
-        let imgData = new Image(this.width, this.height);
+        let sourceFrame = data;
+        let imgData = new Image();
         imgData.src = data;
         this.status = "Image sending...";
         this.status = "Result waiting...";
-        let response = await sendImage(data);
-        let images = new Array(response.length);
+        let responseImage = await sendImage(data);
+        let persons = [];
+        let images = new Array(responseImage.length);
         this.status = "Result processing...";
-        for (let i = 0; i < response.length; i++) {
-          let tempCanvas = document.createElement("canvas");
-          let tempContext = tempCanvas.getContext("2d");
-          let bbox = response[i].bbox;
-          tempCanvas.width = bbox[2] - bbox[0];
-          tempCanvas.height = bbox[3] - bbox[1];
-          tempContext.drawImage(imgData, bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1], 0, 0, bbox[2] - bbox[0], bbox[3] - bbox[1])
-          data = tempCanvas.toDataURL("image/jpeg");
+        for (let i = 0; i < responseImage.length; i++) {
+          let person = await getPerson(responseImage[i].id);
+          let referenceImage = await loadImage("data:image/jpeg;base64," + person.image);
+          person.image = drawImage(person, referenceImage);
+          persons.push(person);
+          data = drawImage(responseImage[i], imgData);
           images[i] = data;
         }
         this.status = "Result output";
         this.setState({
-          persons: response,
+          sourceFrame: sourceFrame,
+          persons: persons,
           images: images,
         })
       } else {
-        this.setState({persons: [], images: [],});
+        this.setState({sourceFrame: "", persons: [], images: [],});
       }
     }
 
@@ -139,7 +160,12 @@ class WebcamCapture extends React.Component {
             <button className="myButton" id="buttonChange" onClick={changeCamera} disabled={this.buttonDisabled}>Change camera</button>
             <button className="myButton" id="buttonTakePhoto" onClick={takePicture} disabled={this.buttonDisabled}>Take photo</button>
           </div>
+          <div>
+            <p>Source frame:</p>
+            <img src={this.state.sourceFrame} alt=""></img>
+          </div>
           <div id="output">
+            <p>Result:</p>
               {
                 this.state.persons.map((value, index) => {
                   return this.renderInfo(index);
@@ -155,10 +181,14 @@ class WebcamCapture extends React.Component {
 
 const sendImage = async (imgString) => {
   let data = {image: imgString.split(",")[1]};
-  return postData("https://face-recognition-microservice.herokuapp.com/", data)
+  return postData("https://face-recognition-microservice.herokuapp.com/", data);
 }
 
-async function postData(url = '', data = {}) {
+const getPerson = async (id) => {
+  return getData("https://person-info-microservice.herokuapp.com/", id);
+}
+
+const postData = async (url = '', data = {}) => {
   const response = await fetch(url, {
     method: 'POST',
     mode: 'cors',
@@ -170,6 +200,16 @@ async function postData(url = '', data = {}) {
     redirect: 'follow',
     referrerPolicy: 'no-referrer',
     body: JSON.stringify(data)
+  });
+  return await response.json();
+}
+
+const getData = async (url = '', id) => {
+  const response = await fetch(url + id, {
+    method: 'GET',
+    mode: 'cors',
+    cache: 'no-cache',
+    credentials: 'same-origin'
   });
   return await response.json();
 }
