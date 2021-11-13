@@ -133,7 +133,13 @@ class WebcamCapture extends React.Component {
         this.status = "Result processing...";
         for (let i = 0; i < responseImage.length; i++) {
           let person = await getPerson(responseImage[i].id);
-          let referenceImage = await loadImage("data:image/jpeg;base64," + person.image);
+          let referenceImage;
+          if (person.image === '') {
+            referenceImage = new Image();
+          }
+          else {
+            referenceImage = await loadImage("data:image/jpeg;base64," + person.image);
+          }
           person.image = drawImage(person, referenceImage);
           persons.push(person);
           data = drawImage(responseImage[i], imgData);
@@ -185,7 +191,18 @@ const sendImage = async (imgString) => {
 }
 
 const getPerson = async (id) => {
-  return getData("https://person-info-microservice.herokuapp.com/", id);
+  if (id == null) {
+    let person = {
+      image: '',
+      bbox: [0, 0, 0, 0],
+      name: '',
+      surname: ''
+    };
+    return person;
+  }
+  else {
+    return getData("https://person-info-microservice.herokuapp.com/", id);
+  }
 }
 
 const postData = async (url = '', data = {}) => {
