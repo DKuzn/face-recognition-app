@@ -19,7 +19,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "preserve": "npm run build",
+    "predevserve": "npm run build",
+    "devserve": "node server.js",
     "serve": "node server.js"
   },
   "eslintConfig": {
