@@ -1,4 +1,5 @@
 import React from "react";
+import axios from "axios";
 import './App.css';
 
 
@@ -187,7 +188,7 @@ class WebcamCapture extends React.Component {
 
 const sendImage = async (imgString) => {
   let data = {image: imgString.split(",")[1]};
-  return postData("https://face-recognition-microservice.herokuapp.com/", data);
+  return postData('/features/', data);
 }
 
 const getPerson = async (id) => {
@@ -201,34 +202,18 @@ const getPerson = async (id) => {
     return person;
   }
   else {
-    return getData("https://person-info-microservice.herokuapp.com/", id);
+    return getData('/person/', id);
   }
 }
 
 const postData = async (url = '', data = {}) => {
-  const response = await fetch(url, {
-    method: 'POST',
-    mode: 'cors',
-    cache: 'no-cache',
-    credentials: 'same-origin',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    redirect: 'follow',
-    referrerPolicy: 'no-referrer',
-    body: JSON.stringify(data)
-  });
-  return await response.json();
+  const response = await axios.post(url, data);
+  return response.data;
 }
 
 const getData = async (url = '', id) => {
-  const response = await fetch(url + id, {
-    method: 'GET',
-    mode: 'cors',
-    cache: 'no-cache',
-    credentials: 'same-origin'
-  });
-  return await response.json();
+  const response = await axios.get(url + id);
+  return response.data;
 }
 
 class App extends React.Component {
