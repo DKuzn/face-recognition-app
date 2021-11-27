@@ -22,3 +22,7 @@ canvas {
 .myButton {
   height: 7ex;
 }
+
+.imageOutput {
+  width: 50%;
+}
