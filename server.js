@@ -36,13 +36,21 @@ app.get('/', (req, res) => {
 });
 
 app.post('/features/', async (req, res) => {
-    let response = await axios.post(process.env.FACE_RECOGNITION, req.body);
-    res.send(response.data);
+    axios.post(process.env.FACE_RECOGNITION, req.body).then((response) => {
+        res.send(response.data);
+    }).catch((err) => {
+        console.log(err);
+        res.sendStatus(err.response.status);        
+    });
 });
 
 app.get('/person/:id', async (req, res) => {
-    let response = await axios.get(process.env.PERSON_INFO + req.params.id);
-    res.send(response.data);
+    axios.get(process.env.PERSON_INFO + req.params.id).then((response) => {
+        res.send(response.data);
+    }).catch((err) => {
+        console.log(err);   
+        res.sendStatus(err.response.status);      
+    });
 });
 
 app.listen(PORT);
