@@ -1,7 +1,7 @@
 {
   "name": "face-recognition-app",
   "homepage": ".",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Dmitry Kuznetsov <dkuznetsov2000@outlook.com>",
   "license": "MIT",
   "private": true,
