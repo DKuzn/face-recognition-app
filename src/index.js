@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 Дмитрий Кузнецов
+ * Copyright (c) 2022 Дмитрий Кузнецов
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,11 +21,10 @@
  */
 
 import React from 'react';
-import ReactDOM from 'react-dom';
+import {createRoot} from 'react-dom/client';
 import './index.css';
 import App from './App';
 
-ReactDOM.render(
-    <App />,
-  document.getElementById('root')
-);
+const container = document.getElementById('root');
+const root = createRoot(container);
+root.render(<App />);
