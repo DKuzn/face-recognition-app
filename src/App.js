@@ -56,10 +56,10 @@ class WebcamCapture extends React.Component {
   renderInfo(i) {
     return (
         <div key={i}>
-          <img className="imageOutput" src={this.state.images[i]} alt="Not available."/>
-          <img className="imageOutput" src={this.state.persons[i].image} alt="Not available."/>
-          <p>Name: {this.state.persons[i].name}</p>
-          <p>Surname: {this.state.persons[i].surname}</p>
+          <img className="imageOutput" src={this.state.images[i]} alt="Не доступно."/>
+          <img className="imageOutput" src={this.state.persons[i].image} alt="Не доступно."/>
+          <p className="textCommon">Имя: {this.state.persons[i].name}</p>
+          <p className="textCommon">Фамилия: {this.state.persons[i].surname}</p>
         </div>
     );
   }
@@ -78,15 +78,15 @@ class WebcamCapture extends React.Component {
     this.setState({sourceFrame: "", persons: [], images: [],});
     let sourceFrame = this.webcamRef.current.getScreenshot();
     if (sourceFrame !== null) {
-      this.status = "Image processing...";
+      this.status = "Обработка изображения...";
       let imgData = new Image();
       imgData.src = sourceFrame;
-      this.status = "Image sending...";
-      this.status = "Result waiting...";
+      this.status = "Отправка изображения...";
+      this.status = "Ожидание результата...";
       let responseImage = await sendImage(sourceFrame);
       let persons = [];
       let images = new Array(responseImage.length);
-      this.status = "Result processing...";
+      this.status = "Обработка результата...";
       for (let i = 0; i < responseImage.length; i++) {
         let person = await getPerson(responseImage[i].id);
         let referenceImage;
@@ -101,7 +101,7 @@ class WebcamCapture extends React.Component {
         let data = drawImage(responseImage[i], imgData);
         images[i] = data;
       }
-      this.status = "Result output";
+      this.status = "Вывод результата";
       this.setState({
         sourceFrame: sourceFrame,
         persons: persons,
@@ -120,22 +120,22 @@ class WebcamCapture extends React.Component {
     return (
       <div className="App-header">
         <div className="App">
-          <p>{this.status}</p>
+          <p className="textCommon">{this.status}</p>
           <Webcam
             ref={this.webcamRef}
             screenshotFormat="image/jpeg"
             videoConstraints={this.state.videoConstraints}
             onUserMedia={this.onGetUserMedia}
           />
-          <button className="myButton" id="buttonChange" onClick={this.changeCamera} disabled={this.state.buttonDisabled}>Change camera</button>
-          <button className="myButton" id="buttonTakePhoto" onClick={this.takePicture} disabled={this.state.buttonDisabled}>Take photo</button>
+          <button className="myButton" id="buttonChange" onClick={this.changeCamera} disabled={this.state.buttonDisabled}>Сменить камеру</button>
+          <button className="myButton" id="buttonTakePhoto" onClick={this.takePicture} disabled={this.state.buttonDisabled}>Сделать фото</button>
         </div>
         <div>
-          <p>Source frame:</p>
+          <p className="textCommon">Исходный кадр:</p>
           <img src={this.state.sourceFrame} alt=""></img>
         </div>
         <div id="output">
-          <p>Result:</p>
+          <p className="textCommon">Результат:</p>
             {
               this.state.persons.map((value, index) => {
                 return this.renderInfo(index);
@@ -147,12 +147,166 @@ class WebcamCapture extends React.Component {
   }
 }
 
+class FileCapture extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      imageFile: "",
+      persons: [],
+      images: [],
+    };
+
+    let isMobile = window.matchMedia("only screen and (max-width: 760px)").matches;
+    if (isMobile) {
+      this.width = window.screen.width;
+    } else {
+      this.width = 500;
+    }
+  }
+
+  renderInfo(i) {
+    return (
+        <div key={i}>
+          <img className="imageOutput" src={this.state.images[i]} alt="Не доступно."/>
+          <img className="imageOutput" src={this.state.persons[i].image} alt="Не доступно."/>
+          <p className="textCommon">Имя: {this.state.persons[i].name}</p>
+          <p className="textCommon">Фамилия: {this.state.persons[i].surname}</p>
+        </div>
+    );
+  }
+
+  onFileChange = async (event) => {
+    let reader = new FileReader();
+    let imgPreview = document.getElementById("imageFile");
+    let file = document.getElementById("fileChooser").files[0];
+    reader.readAsDataURL(file);
+    reader.onload = function () {
+        imgPreview.src = reader.result;
+    };
+    reader.onerror = function (error) {
+        console.log('Error: ', error);
+    };
+  }
+
+  onButtonChooseFileClick = () => {
+    let fileChooser = document.getElementById("fileChooser");
+    fileChooser.click();
+  }
+
+  onButtonSendImageClick = async () => {
+    this.setState({persons: [], images: [],});
+    let sourceFrame = document.getElementById("imageFile").src;
+    if (sourceFrame !== null) {
+      this.status = "Обработка изображения...";
+      let imgData = new Image();
+      imgData.src = sourceFrame;
+      this.status = "Отправка изображения...";
+      this.status = "Ожидание результата...";
+      let responseImage = await sendImage(sourceFrame);
+      let persons = [];
+      let images = new Array(responseImage.length);
+      this.status = "Обработка результата...";
+      for (let i = 0; i < responseImage.length; i++) {
+        let person = await getPerson(responseImage[i].id);
+        let referenceImage;
+        if (person.image === '') {
+          referenceImage = new Image();
+        }
+        else {
+          referenceImage = await loadImage("data:image/jpeg;base64," + person.image);
+        }
+        person.image = drawImage(person, referenceImage);
+        persons.push(person);
+        let data = drawImage(responseImage[i], imgData);
+        images[i] = data;
+      }
+      this.status = "Вывод результата";
+      this.setState({
+        sourceFrame: sourceFrame,
+        persons: persons,
+        images: images,
+      })
+    } else {
+      this.setState({persons: [], images: [],});
+    }
+  }
+
+  render() {
+    return (
+      <div className="App-header">
+        <div className="App">
+          <p className="textCommon">{this.status}</p>
+          <input type="file" id="fileChooser" accept="image/jpeg,image/png" onChange={this.onFileChange}></input>
+          <img id="imageFile" width={this.width}/>
+          <button className="myButton" id="buttonChooseFIle" onClick={this.onButtonChooseFileClick} disabled={this.buttonDisabled}>Выбрать файл</button>
+          <button className="myButton" id="buttonSendFile" onClick={this.onButtonSendImageClick} disabled={this.buttonDisabled}>Отправить файл</button>
+        </div>
+        <div id="output">
+          <p className="textCommon">Результат:</p>
+            {
+              this.state.persons.map((value, index) => {
+                return this.renderInfo(index);
+              })
+            }
+        </div>
+        <canvas id="canvas">
+        </canvas>
+      </div>
+    );
+  }
+}
+
+class MainVIew extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      capture: "main",
+    };
+  }
+
+  renderCapture = (name) => {
+    if (name === "file") {
+      return (<FileCapture/>);
+    }
+    else if (name === "webcam") {
+      return (<WebcamCapture/>);
+    }
+    else {
+      return this.renderMain();
+    }
+  }
+
+  renderMain = () => {
+    return (
+      <div className="App-header">
+        <div className="App">
+          <button className="myButton" id="buttonOpenFIleCapture" onClick={this.onButtonOpenFIleCaptureClick}>Распознать из файла</button>
+          <button className="myButton" id="buttonOpenWebcamCapture" onClick={this.onButtonOpenWebcamCaptureClick}>Распознать из камеры</button>
+        </div>
+      </div>
+    );
+  }
+
+  onButtonOpenFIleCaptureClick = () => {
+    this.setState({capture: "file"});
+  }
+
+  onButtonOpenWebcamCaptureClick = () => {
+    this.setState({capture: "webcam"});
+  }
+
+  render() {
+    return this.renderCapture(this.state.capture);
+  }
+}
+
 class App extends React.Component {
   render() {
     return (
         <div className="App">
           <header className="App-header">
-            <WebcamCapture/>
+            <p className="titleMain">Микросервисная система распознавания лиц</p>
+            <MainVIew/>
           </header>
         </div>
     );
