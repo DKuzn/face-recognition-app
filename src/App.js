@@ -26,33 +26,7 @@ import {drawImage, loadImage, sendImage, getPerson} from './utils.js';
 import './App.css';
 
 
-class WebcamCapture extends React.Component {
-  constructor(props) {
-    super(props);
-    this.status = "";
-    let isMobile = window.matchMedia("only screen and (max-width: 760px)").matches;
-    if (isMobile) {
-      this.width = null;
-      this.height = window.screen.width;
-    } else {
-      this.width = 500;
-      this.height = null;
-    }
-    this.facingMode = true;
-    this.state = {
-      sourceFrame: "",
-      persons: [],
-      images: [],
-      videoConstraints: {
-        width: this.width,
-        height: this.height, 
-        facingMode: "user"
-      },
-      buttonDisabled: true,
-    };
-    this.webcamRef = React.createRef();
-  }
-
+class Capture extends React.Component {
   renderInfo(i) {
     return (
         <div key={i}>
@@ -64,19 +38,24 @@ class WebcamCapture extends React.Component {
     );
   }
 
-  changeCamera = async () => {
-    this.status = "";
-    this.facingMode = !this.facingMode;
-    this.setState({sourceFrame: "", persons: [], images: [], videoConstraints: {
-      width: this.width,
-      height: this.height, 
-      facingMode: this.facingMode ? "user" : "environment"
-    }});
+  renderOutput() {
+    return (
+      <div id="output">
+          <p className="textCommon">Результат:</p>
+            {
+              this.state.persons.map((value, index) => {
+                return this.renderInfo(index);
+              })
+            }
+        </div>
+    );
   }
 
-  takePicture = async () => {
-    this.setState({sourceFrame: "", persons: [], images: [],});
-    let sourceFrame = this.webcamRef.current.getScreenshot();
+  isMobile() {
+    return window.matchMedia("only screen and (max-width: 760px)").matches;
+  }
+
+  async recognizeFaces(sourceFrame) {
     if (sourceFrame !== null) {
       this.status = "Обработка изображения...";
       let imgData = new Image();
@@ -111,6 +90,49 @@ class WebcamCapture extends React.Component {
       this.setState({sourceFrame: "", persons: [], images: [],});
     }
   }
+}
+
+class WebcamCapture extends Capture {
+  constructor(props) {
+    super(props);
+    this.status = "";
+    if (this.isMobile()) {
+      this.width = null;
+      this.height = window.screen.width;
+    } else {
+      this.width = 500;
+      this.height = null;
+    }
+    this.facingMode = true;
+    this.state = {
+      sourceFrame: "",
+      persons: [],
+      images: [],
+      videoConstraints: {
+        width: this.width,
+        height: this.height, 
+        facingMode: "user"
+      },
+      buttonDisabled: true,
+    };
+    this.webcamRef = React.createRef();
+  }
+
+  changeCamera = () => {
+    this.status = "";
+    this.facingMode = !this.facingMode;
+    this.setState({sourceFrame: "", persons: [], images: [], videoConstraints: {
+      width: this.width,
+      height: this.height, 
+      facingMode: this.facingMode ? "user" : "environment"
+    }});
+  }
+
+  takePicture = () => {
+    this.setState({sourceFrame: "", persons: [], images: [],});
+    let sourceFrame = this.webcamRef.current.getScreenshot();
+    this.recognizeFaces(sourceFrame);
+  }
 
   onGetUserMedia = () => {
     this.setState({buttonDisabled: false});
@@ -134,48 +156,29 @@ class WebcamCapture extends React.Component {
           <p className="textCommon">Исходный кадр:</p>
           <img src={this.state.sourceFrame} alt=""></img>
         </div>
-        <div id="output">
-          <p className="textCommon">Результат:</p>
-            {
-              this.state.persons.map((value, index) => {
-                return this.renderInfo(index);
-              })
-            }
-        </div>
+        {this.renderOutput()}
       </div>
     );
   }
 }
 
-class FileCapture extends React.Component {
+class FileCapture extends Capture {
   constructor(props) {
     super(props);
     this.state = {
-      imageFile: "",
+      sourceFrame: "",
       persons: [],
       images: [],
     };
 
-    let isMobile = window.matchMedia("only screen and (max-width: 760px)").matches;
-    if (isMobile) {
+    if (this.isMobile()) {
       this.width = window.screen.width;
     } else {
       this.width = 500;
     }
   }
 
-  renderInfo(i) {
-    return (
-        <div key={i}>
-          <img className="imageOutput" src={this.state.images[i]} alt="Не доступно."/>
-          <img className="imageOutput" src={this.state.persons[i].image} alt="Не доступно."/>
-          <p className="textCommon">Имя: {this.state.persons[i].name}</p>
-          <p className="textCommon">Фамилия: {this.state.persons[i].surname}</p>
-        </div>
-    );
-  }
-
-  onFileChange = async (event) => {
+  onFileChange = () => {
     let reader = new FileReader();
     let imgPreview = document.getElementById("imageFile");
     let file = document.getElementById("fileChooser").files[0];
@@ -189,46 +192,15 @@ class FileCapture extends React.Component {
   }
 
   onButtonChooseFileClick = () => {
+    this.setState({persons: [], images: [],});
     let fileChooser = document.getElementById("fileChooser");
     fileChooser.click();
   }
 
-  onButtonSendImageClick = async () => {
+  onButtonSendImageClick = () => {
     this.setState({persons: [], images: [],});
     let sourceFrame = document.getElementById("imageFile").src;
-    if (sourceFrame !== null) {
-      this.status = "Обработка изображения...";
-      let imgData = new Image();
-      imgData.src = sourceFrame;
-      this.status = "Отправка изображения...";
-      this.status = "Ожидание результата...";
-      let responseImage = await sendImage(sourceFrame);
-      let persons = [];
-      let images = new Array(responseImage.length);
-      this.status = "Обработка результата...";
-      for (let i = 0; i < responseImage.length; i++) {
-        let person = await getPerson(responseImage[i].id);
-        let referenceImage;
-        if (person.image === '') {
-          referenceImage = new Image();
-        }
-        else {
-          referenceImage = await loadImage("data:image/jpeg;base64," + person.image);
-        }
-        person.image = drawImage(person, referenceImage);
-        persons.push(person);
-        let data = drawImage(responseImage[i], imgData);
-        images[i] = data;
-      }
-      this.status = "Вывод результата";
-      this.setState({
-        sourceFrame: sourceFrame,
-        persons: persons,
-        images: images,
-      })
-    } else {
-      this.setState({persons: [], images: [],});
-    }
+    this.recognizeFaces(sourceFrame);
   }
 
   render() {
@@ -241,16 +213,7 @@ class FileCapture extends React.Component {
           <button className="myButton" id="buttonChooseFIle" onClick={this.onButtonChooseFileClick} disabled={this.buttonDisabled}>Выбрать файл</button>
           <button className="myButton" id="buttonSendFile" onClick={this.onButtonSendImageClick} disabled={this.buttonDisabled}>Отправить файл</button>
         </div>
-        <div id="output">
-          <p className="textCommon">Результат:</p>
-            {
-              this.state.persons.map((value, index) => {
-                return this.renderInfo(index);
-              })
-            }
-        </div>
-        <canvas id="canvas">
-        </canvas>
+        {this.renderOutput()}
       </div>
     );
   }
