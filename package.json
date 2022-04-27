@@ -1,7 +1,7 @@
 {
   "name": "face-recognition-app",
   "homepage": ".",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "author": "Dmitry Kuznetsov <dkuznetsov2000@outlook.com>",
   "license": "MIT",
   "private": true,
@@ -42,6 +42,7 @@
   "devDependencies": {
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
+    "react-localization": "^1.0.19",
     "react-scripts": "5.0.1",
     "react-webcam": "^7.0.1",
     "web-vitals": "^2.1.4"

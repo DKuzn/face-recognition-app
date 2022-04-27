@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat&family=Roboto&display=swap');
+
 .App {
   text-align: center;
   display: flex;
@@ -5,20 +7,58 @@
 }
 
 .App-header {
-  background-color: #282c34;
+  background-color: white;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: black;
+}
+
+canvas {
+  display: none;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#lang {
+  margin-left: 1%;
+}
+
+#fileChooser {
+  opacity: 0;
+  visibility: hidden;
+  position: absolute;
+  width: 0;
 }
 
 .myButton {
   height: 7ex;
+  background-color: white;
+  color: #ff0a00;
+  border: 0.3ex solid #04009b;
+  border-radius: 1ex;
+  margin-top: 0.5ex;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
 }
 
 .imageOutput {
   width: 50%;
+}
+
+.titleMain {
+  font-family: 'Montserrat', sans-serif;
+  color: #04009b;
+}
+
+.textCommon {
+  font-family: 'Roboto', sans-serif;
+  color: #04009b;
 }

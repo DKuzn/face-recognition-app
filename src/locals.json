@@ -1,0 +1,30 @@
+{
+    "ru": {
+        "mainTitle": "Микросервисная система распознавания лиц",
+        "recognizeFromFile": "Распознать из файла",
+        "recognizeFromCamera": "Распознать из камеры",
+        "name": "Имя",
+        "surname": "Фамилия",
+        "buttonChange": "Сменить камеру",
+        "buttonTakePhoto": "Сделать фото",
+        "buttonChooseFile": "Выбрать файл",
+        "buttonSendFile": "Отправить файл",
+        "sourceFrame": "Исходный кадр",
+        "result": "Результат",
+        "notAvailable": "Не доступно."
+    },
+    "en": {
+        "mainTitle": "Microservice face recognition system",
+        "recognizeFromFile": "Recognize from file",
+        "recognizeFromCamera": "Recognize from camera",
+        "name": "Name",
+        "surname": "Surname",
+        "buttonChange": "Change camera",
+        "buttonTakePhoto": "Take photo",
+        "buttonChooseFile": "Select file",
+        "buttonSendFile": "Send file",
+        "sourceFrame": "Source frame",
+        "result": "Result",
+        "notAvailable": "Not avaialble."
+    }
+}
