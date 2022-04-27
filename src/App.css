@@ -21,6 +21,16 @@ canvas {
   display: none;
 }
 
+.title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#lang {
+  margin-left: 1%;
+}
+
 #fileChooser {
   opacity: 0;
   visibility: hidden;
