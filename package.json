@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "axios": "^0.26.1",
-    "express": "^4.17.3"
+    "body-parser": "^1.20.0",
+    "express": "^4.17.3",
+    "serve-static": "^1.15.0"
   },
   "scripts": {
     "start": "react-scripts start",
