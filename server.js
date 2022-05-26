@@ -21,6 +21,9 @@ const bodyParser = require('body-parser');
 const serveStatic = require('serve-static');
 
 
+axios.defaults.maxBodyLength = Infinity;
+axios.defaults.maxContentLength = Infinity;
+
 const app = express();
 
 const PORT = process.env.PORT || 80
