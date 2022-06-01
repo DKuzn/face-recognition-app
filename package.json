@@ -1,6 +1,6 @@
 {
   "name": "face-recognition-app",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "author": "Dmitry Kuznetsov <dkuznetsov2000@outlook.com>",
   "license": "AGPL-3.0",
   "private": true,

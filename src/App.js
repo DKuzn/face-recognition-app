@@ -221,7 +221,7 @@ class FileCapture extends Capture {
   }
 }
 
-class MainVIew extends React.Component {
+class MainView extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -294,7 +294,7 @@ class App extends React.Component {
               <p className="titleMain">{strings.mainTitle}</p>
               {this.renderSelectLang()}
             </div>
-            <MainVIew/>
+            <MainView/>
           </header>
         </div>
     );
